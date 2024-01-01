@@ -831,9 +831,10 @@ class WatchMPV(HTTPEndpoint):
         # it seems that backslashes work but not as_posix()
         import shlex
         args = [common.VIDEO_PLAYER_CMD] + shlex.split(common.VIDEO_PLAYER_FLAGS)
-        if is_landscape:
+        if 'mpv' in common.VIDEO_PLAYER_CMD and common.FORCE_VERTICAL and is_landscape:
             args.append("--video-rotate=90")
         args += [str(p) for p in paths]
+        ic(args)
         # use .Popen instead of .call so it doesn't block
         try:
             subprocess.Popen(args)

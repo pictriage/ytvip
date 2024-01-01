@@ -45,9 +45,10 @@ else:
 
 class _PREFKEYS:
     YOUTUBE_API_KEY = 'youtube_api_key'
-    YT_DLP_COMMAND = 'yt_dlp_command'
+    YT_DLP_EXECUTABLE = 'yt_dlp_executable'
     YT_DLP_FLAGS = 'yt_dlp_flags'
     VIDEO_PLAYER_COMMAND = 'video_player_command'
+    VIDEO_PLAYER_EXECUTABLE = 'video_player_executable'
     VIDEO_PLAYER_FLAGS = 'video_player_flags'
     FORCE_VERTICAL = 'force_vertical'
     PORT = 'port'
@@ -61,14 +62,21 @@ _INITIAL_PREFS_CONTENT = {
     _PREFKEYS.YOUTUBE_API_KEY: '',
     _PREFKEYS.PORT: DEFAULT_PORT,
     _PREFKEYS.YT_DLP_FLAGS: '',
-    _PREFKEYS.VIDEO_PLAYER_COMMAND: DEFAULT_VIDEO_PLAYER_COMMAND,
+    _PREFKEYS.VIDEO_PLAYER_EXECUTABLE: DEFAULT_VIDEO_PLAYER_COMMAND,
 }
 
 LAUNCH_BROWSER = _prefs.get(_PREFKEYS.LAUNCH_BROWSER, True)
 YOUTUBE_API_KEY = _prefs.get(_PREFKEYS.YOUTUBE_API_KEY)
-YT_DLP_CMD = _prefs.get(_PREFKEYS.YT_DLP_COMMAND, 'yt-dlp')
-YT_DLP_FLAGS = _prefs.get(_PREFKEYS.YT_DLP_COMMAND, '')
-VIDEO_PLAYER_CMD = _prefs.get(_PREFKEYS.VIDEO_PLAYER_COMMAND, DEFAULT_VIDEO_PLAYER_COMMAND)
+YT_DLP_CMD = (
+        _prefs.get(_PREFKEYS.YT_DLP_EXECUTABLE) or
+        'yt-dlp'
+)
+YT_DLP_FLAGS = _prefs.get(_PREFKEYS.YT_DLP_FLAGS, '')
+VIDEO_PLAYER_CMD = (
+        _prefs.get(_PREFKEYS.VIDEO_PLAYER_EXECUTABLE) or
+        _prefs.get(_PREFKEYS.VIDEO_PLAYER_COMMAND) or
+        DEFAULT_VIDEO_PLAYER_COMMAND
+)
 
 if _prefs.get(
     _PREFKEYS.VIDEO_PLAYER_FLAGS):
