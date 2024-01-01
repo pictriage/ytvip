@@ -1,0 +1,56 @@
+<div class="thumbnail-and-description scrollbydiv">
+
+  <!--
+  htmx bug? name=value doesn't get sent on button.
+  https://github.com/bigskysoftware/htmx/issues/1132
+  use htmx 1.8.2 instead
+  -->
+
+  <form hx-post="/mpv" hx-target="find .status">
+    <input type="hidden" name="ytid" value="{{ video.ytid }}">
+    <button {% if not is_downloaded %}disabled{% endif %}
+      style="all: unset; {% if is_downloaded %}cursor:pointer{% endif %}" onclick="pauseAllMiniplayers()">
+
+      {% if preview_url %}
+      <div class="preview-wrapper-{{ video.display_orientation() }}">
+        <video class="preview preview-{{ video.horz_vert_htov() }}" data-src="{{ preview_url }}" muted loop></video>
+      </div>
+      {% else %}
+      <img class="thumbnail-static" src="{{ thumbnail_url }}">
+      {% endif %}
+    </button>
+    <span class="status"></span>
+  </form>
+
+  <div style="display: flex; justify-content: space-between; margin-top: 3px; align-items: center">
+
+    <div>
+    {% if is_downloaded %}
+    ✓
+    {% else %}
+      <button onclick="clickedDownload(this)" data-channel_id="{{video.channel.id}}" data-ytid="{{video.ytid}}"
+        type="button">
+        {{ video.download_status_for_dl_button() }}
+        {{ download_icon }}
+      </button>
+      {% endif %}
+    </div>
+
+
+    <span>
+    ☆<input type="number" name="score" size="3" value="{{ video.score }}" hx-post="/change_score" hx-trigger="change"
+      hx-vars="{ytid: '{{ video.ytid }}'}">
+    </span>
+
+    <a href="https://www.youtube.com/watch?v={{video.ytid}}" target="_blank">
+      @YT
+    </a>
+
+  </div>
+
+  <ul class="description">
+    {% for k, v in bullets.items() %}
+    <li>{{k}}: <b>{{v}}</b></li>
+    {% endfor %}
+  </ul>
+</div>

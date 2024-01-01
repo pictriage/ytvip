@@ -1,0 +1,130 @@
+<html>
+
+<head>
+  <title>"{{search_term }}" | {{ BRAND_NAME }} search</title>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+</head>
+
+<body>
+  <h1><a href="/">{{ BRAND_NAME }}</a> > search: "{{search_term}}"</h1>
+  <script src="{% static 'jquery.min.js' %}"></script>
+  <script src="{% static 'common.js' %}"></script>
+  <script src="{% static 'scrollbydiv.js' %}"></script>
+  <script src="{% static 'htmx.min.js' %}"></script>
+  <script src="{% static 'miniplayer.js' %}"></script>
+
+  <div>
+    <!-- do it onsubmit, because if the page is loaded with the checkboxes already unchecked,
+      there will be no check event.
+    -->
+    <form method="GET" action="/search" style="display: inline" onsubmit="updateIncludeExclude()">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <input name="search_term" required placeholder="Search..." value="{{ search_term }}" autofocus>
+        <div>
+          <label>
+            <input type="radio" name="search_order_by_date" value="1" {% if order_by_date_bool %}checked{% endif %}>
+            Order by date
+          </label>
+          <br>
+          <label>
+            <input type="radio" name="search_order_by_date" value="0" {% if not order_by_date_bool %}checked{% endif %}>
+            Order by likes
+          </label>
+        </div>
+        <button style="color: #fff; background-color: #007bff; padding: .5rem 1rem">Search</button>
+      </div>
+      <details {% if date_min or date_max %}open{% endif %}>
+        <summary>Date range</summary>
+        <p>
+        <input type="date" name="date_min" value="{{ date_min }}"> to
+        <input type="date" name="date_max" value="{{ date_max }}">        
+        </p>
+      </details>
+      <details {% if filter_widget_expanded %}open{% endif %}>
+        <summary>Filter by channel</summary>
+        <p>
+          <button type="button" onclick="selectAllChanels()">Select all</button>
+          <button type="button" onclick="unselectAllChanels()">Un-select all</button>
+        </p>
+        {% for channel in channels %}
+        <label>
+          <input type="checkbox" {% if channel.tmp_is_included %}checked{% endif %} class="channel-checkbox"
+            value="{{ channel.id }}">
+          {{ channel.name }}
+        </label><br>
+        {% endfor %}
+      </details>
+      <input type="hidden" name="channels_to_include">
+      <input type="hidden" name="channels_to_exclude">
+      <script>
+        let checkboxes = document.getElementsByClassName('channel-checkbox');
+        function updateIncludeExclude() {
+          /* so that we don't get long query strings,
+          or end up with weirdly omitting channels that were added after
+          the page was loaded. more parsimonious.
+          */
+          let includes = [];
+          let excludes = [];
+          for (let ele of checkboxes) {
+            let lst = ele.checked ? includes : excludes;
+            lst.push(ele.value);
+          }
+          let eleInclude = document.querySelector("[name=channels_to_include]");
+          let eleExclude = document.querySelector("[name=channels_to_exclude]");
+          if (includes.length < excludes.length) {
+            eleInclude.value = includes.join(',');
+            eleExclude.value = '';
+          } else {
+            eleInclude.value = '';
+            eleExclude.value = excludes.join(',');
+          }
+        }
+
+        function selectAllChanels() {
+          for (let ele of checkboxes) {
+            ele.checked = true;
+          }
+        }
+
+        function unselectAllChanels() {
+          console.log('unselect all')
+          for (let ele of checkboxes) {
+            ele.checked = false;
+          }
+        }
+      </script>
+    </form>
+    <form method="POST" action="/ignore_terms" style="float: right; display: inline">
+      <button name="add_term" onclick="btnIgnoreClicked(this)">✗ Hide any videos containing this term</button>
+    </form>
+  </div>
+  <script>
+    function btnIgnoreClicked(btn) {
+      btn.value = document.querySelector('[name=search_term]').value;
+    }
+  </script>
+
+
+  <p>{{ num_results }} results</p>
+
+  {% if downloaded_video_htmls %}
+  <h2 class="scrollbydiv">Already downloaded</h2>
+  <div class="gallery">
+    {% for html in downloaded_video_htmls %}
+    {{ html }}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if video_htmls %}
+  <h2 class="scrollbydiv">Not downloaded</h2>
+  <div class="gallery">
+    {% for html in video_htmls %}
+    {{ html }}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</body>
+
+</html>

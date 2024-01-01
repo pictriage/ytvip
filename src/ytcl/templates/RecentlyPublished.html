@@ -1,0 +1,23 @@
+<html>
+<head><title>{{ BRAND_NAME }}: Recently published</title>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+</head>
+<body>
+<h1><a href="/">{{ BRAND_NAME }}</a> > Recently published</h1>
+<script src="{% static 'jquery.min.js' %}"></script>
+<script src="{% static 'common.js' %}"></script>
+<script src="{% static 'htmx.min.js' %}"></script>
+<script src="{% static 'scrollbydiv.js' %}"></script>
+<script src="{% static 'miniplayer.js' %}"></script>
+
+    <a href="{% url 'UpdateFromYouTube' %}">
+      <button>🔄 Update from YouTube</button></a>
+
+<div class="gallery">
+  {% for html in video_htmls %}
+    {{ html }}
+  {% endfor %}
+</div>
+
+</body>
+</html>

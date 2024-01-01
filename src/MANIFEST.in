@@ -1,0 +1,2 @@
+recursive-include ytcl/statics *
+recursive-include ytcl/templates *

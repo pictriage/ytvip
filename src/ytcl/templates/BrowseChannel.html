@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{{ BRAND_NAME }}: {{ channel.name }}</title>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+</head>
+
+<body>
+  <h1><a href="/">{{ BRAND_NAME }}</a> > {{ channel.name }}</h1>
+  <script src="{% static 'jquery.min.js' %}"></script>
+  <script src="{% static 'common.js' %}"></script>
+  <script src="{% static 'miniplayer.js' %}"></script>
+  <script src="{% static 'htmx.min.js' %}"></script>
+  <script src="{% static 'scrollbydiv.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      for (let form of document.querySelectorAll('form')) {
+        form.insertAdjacentHTML('beforeend',
+          "<input type='hidden' name='channel_id' value='{{ channel.id }}' />")
+      }
+    });
+  </script>
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+    <form hx-post="/mpv" hx-target="find .status" class="inline-form">
+      <span class="status"></span>
+      {% if regular_orientation_count > 0 %}
+      <button>▶ Watch ({{regular_orientation_count}})</button>
+      {% endif %}
+      {% if htov_count %}
+      <button name="rotated" value="1">▶ Watch rotated ({{htov_count}})</button>
+      {% endif %}
+    </form>
+    <form method="GET" class="inline-form">
+      <select name="sort_by" onchange="this.form.submit()">
+        {% for option, selected in sort_by_options.items() %}
+        <option value="{{ option }}" {% if selected %}selected{% endif %}>
+          Sort by {{ option }}
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{{ channel.populate_videos_url() }}">
+      <button>🔄 Update from YouTube</button></a>
+    <form hx-post="/channel-action" hx-target="find .status" class="inline-form">
+      <button name="action" value="file-browser-videos">Open 📁</button>
+      {# <button name="action" value="file-browser-thumbnails">Edit thumbnails</button> #}
+      <button name="action" value="download-missing-thumbnails">Download missing thumbnails</button>
+      <button name="action" value="download-previews-chunk">Download previews</button>
+      <span class="status"></span>
+    </form>
+    <form method="POST" class="inline-form">
+      <button formaction="{% url 'DeleteChannel' %}">Delete channel</button>
+      <!--
+      could use checkboxes with HTMX hx-action, but we want to force a page
+      reload. maybe do it with vanilla JS.
+      but then need to wrap each checkbox in a <form> element with
+      the hidden channel_id input. not much benefit.
+      -->
+      <form action="{% url 'ToggleShowStaticThumbnails' %}" method="POST">
+        <my-fieldset>
+          <label>
+            <input type="checkbox" {% if channel.auto_download_previews %}checked{% endif %}
+              onclick="this.form.submit()">
+            Auto-download previews
+          </label>
+        </my-fieldset>
+      </form>
+
+      <form action="{% url 'ToggleShowStaticThumbnails' %}" method="POST">
+        <my-fieldset>
+          <label>
+            <input type="checkbox" {% if not show_static_thumbnails %}checked{% endif %} onclick="this.form.submit()">
+            View previews
+          </label>
+        </my-fieldset>
+      </form>
+    </form>
+
+    <!--
+      not really needed. better to just search using Ctrl+F,
+      or if it's a huge channel use the search page.
+    <form method="GET" action="/search" class="search">
+      <input name="search_term" required placeholder="🔎 Search this channel...">
+      <input type="hidden" name="channels_to_include" value="{{ channel.id }}">
+    </form>
+    -->
+
+  </div>
+
+  {% for name, video_htmls in section_htmls.items() %}
+  <hr>
+  {% for name2 in section_htmls.keys() %}
+  {% if name == name2 %}
+  <h2 id="{{ name }}" style="display: inline" class="scrollbydiv">{{ name }}</h2>
+  {% else %}
+  <a href="#{{ name2 }}">{{ name2 }}</a>
+  {% endif %}|
+  {% endfor %}
+  <div class="gallery">
+    {% for html in video_htmls %}
+    {{ html }}
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <h3>
+    Page:
+    {% for other_page_number in page_numbers %}
+    {% if other_page_number == page_number %}
+    {{ other_page_number }}
+    {% else %}
+    <a href="?page={{ other_page_number }}">{{ other_page_number }}</a>
+    {% endif %}
+    |
+    {% endfor %}
+  </h3>
+  <br><br><br><br>
+</body>
+
+</html>

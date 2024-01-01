@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Modify Ignore Terms</title>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+</head>
+<body>
+  <h1><a href="/">{{ BRAND_NAME }}</a> > Modify Ignore Terms</h1>
+
+  <form method="POST">
+  <ul>
+    {% for term in terms %}
+      <li>
+        <button name="delete_term_id" value="{{ term.id }}">x</button>
+        {{ term.term }}
+      </li>
+    {% endfor %}
+  </ul>
+  </form>
+  <!-- make it a separate form so that the delete buttons don't get interpreted as submit buttons -->
+  <form method="POST">
+    <label>Add new: <input name="add_term"></label>
+  </form>
+</body>
+</html>

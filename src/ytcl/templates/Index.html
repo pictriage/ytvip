@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{ BRAND_NAME }}</title>
+  <style>
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  </style>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+
+  <script src="{% static 'htmx.min.js' %}"></script>
+  <script src="{% static 'miniplayer.js' %}"></script>
+</head>
+
+<body>
+  {% if not channels %}
+  <p>Welcome! Click 'Add channel' to add a YouTube channel to your library.</p>
+  {% endif %}
+
+  <div>
+    <form hx-post="/mpv" hx-target="find .status" style="display: inline">
+      <span class="status"></span>
+      <input type="hidden" name="play_all" value="1">
+      <button>Play ▶</button>
+      {% if FORCE_VERTICAL %}
+      <button name="rotated" value="1">Play ▶ rotated</button>
+      {% endif %}
+    </form>
+    <a href="{% url 'UpdateFromYouTube' %}">
+      <button>🔄 Update all from YouTube</button></a>
+  </div>
+
+  <br>
+  <div>
+    <a href="{% url 'AddChannel' %}">➕ Add channel</a> |
+    <a href="{% url 'RecentlyPublished' %}">Recently published</a> |
+    <a href="{% url 'Downloads' %}">Downloads</a> |
+    <a href="/ignore_terms">Set terms to ignore</a>
+  </div>
+
+  <br>
+  <form method="GET" action="/search" class="search">
+    <input name="search_term" required placeholder="🔎 Search your library...">
+  </form>
+
+  <p>
+  </p>
+
+  <div class="gallery">
+    {% for c in channels %}
+    <div style="margin: 20px">
+      <a href="{{ c.local_url() }}">
+        {% if c.tmp_preview_videos %}
+        <div class="channel-preview-stack-{{ c.tmp_display_orientation }}">
+          {% for v in c.tmp_preview_videos %}
+          <div class="channel-preview-wrapper-{{ v.display_orientation() }}">
+            <video class="preview channel-preview-{{ v.horz_vert_htov() }}" data-src="{{ v.preview_url() }}" muted
+              loop></video>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <!-- maybe the channel doesn't have any videos loaded.
+          fall back to using the channel's thumbnail
+          -->
+        <img src="{% static c.thumbnail_static_path() %}" style="width: 200px">
+        {% endif %}
+
+      </a>
+      <h3>{{ c.name }}</h3>
+      <p>{{ c.num_local_videos() }}/{{ c.num_videos() }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</body>
+
+</html>

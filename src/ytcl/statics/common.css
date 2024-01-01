@@ -1,0 +1,144 @@
+body {
+  background-color: black;
+  color: #BBBBBB;
+}
+
+a {
+  color: #00BFFF
+}
+
+.gallery {
+  /* don't use css grid because some thumbnails
+  are vertical and some horz, different dims */
+  display: flex;
+  flex-wrap: wrap
+}
+
+.thumbnail-and-description {
+  margin: 20px;
+  display: inline-block;
+}
+
+.thumbnail-static {
+  display: block;
+  height: auto;
+  width: auto;
+  max-height: 400px;
+  max-width: 300px;
+}
+
+.preview {
+  display: block;
+  height: auto;
+  width: auto;
+  position: absolute;
+}
+
+/* VIDEO PREVIEW STUFF */
+/* previews are played at 384x216 (or 216x384, if the video is vertical 
+or if force_vertical is set.
+*/
+
+.preview-wrapper-vert {
+  height: 384px;
+  width: 216px;
+}
+
+.preview-wrapper-horz {
+  height: 216px;
+  width: 384px;
+}
+
+.preview-horz {
+  width: 384px;
+}
+
+.preview-vert {
+  height: 384px;
+}
+
+
+.preview-htov {
+  width: 384px;
+  transform: translate(216px, 0%) rotate(90deg);
+  transform-origin: top left;
+}
+
+/* CHANNEL PREVIEW STUFF */
+/* 
+channel previews are played at 320x180 and stacked in 2s. 
+if force_vertical, they are stacked side by side.
+*/
+
+.channel-preview-stack-horz {
+  display: flex;
+  flex-direction: column;
+}
+
+.channel-preview-stack-vert {
+  display: flex;
+  flex-direction: row;
+}
+
+.channel-preview-wrapper-horz {
+  height: 180px;
+  width: 320px;
+}
+
+.channel-preview-wrapper-vert {
+  height: 320px;
+  width: 180px;
+}
+
+.channel-preview-horz {
+  width: 320px;
+}
+
+.channel-preview-vert {
+  height: 320px;
+}
+
+.channel-preview-htov {
+  width: 320px;
+  transform: translate(180px, 0%) rotate(90deg);
+  transform-origin: top left;
+}
+
+
+/*put these properties on the wrapper,
+  because this one doesn't get rotated.
+  https://stackoverflow.com/questions/63204448/css-transform-doesnt-change-css-layout
+
+*/
+
+
+my-fieldset {
+  opacity: 1;
+  outline: 1px solid;
+  margin-right: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 5px;
+  display: inline;
+  white-space: nowrap;
+}
+
+
+
+.description {
+  /* make it adjust to the width of the image */
+  width: 0;
+  min-width: 100%;
+}
+
+.inline-form {
+  display: inline;
+}
+
+.highlight-term {
+  background-color: green;
+}
+
+summary {
+  cursor: pointer;
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Channel</title>
+  <link rel="stylesheet" href="{% static 'common.css' %}">
+</head>
+<body>
+  <h1><a href="/">{{ BRAND_NAME }}</a> > Add Channel</h1>
+
+  <form method="POST">
+    <p>To add a channel, get the URL of any video from the channel and enter it here:</p>
+    <p><input name="video_url"
+              placeholder="Video URL, e.g. https://www.youtube.com/watch?v=0e3GPea1Tyg"
+              size="80"
+              pattern=".*\?v=.*" 
+              autocomplete="off" required
+              autofocus
+    /></p>
+    <p>Note: the video URL must contain a 'v=' parameter, e.g.
+      <code>https://www.youtube.com/watch?v=0e3GPea1Tyg</code>
+
+    </p>
+    <p>
+      <label>
+        <input type="checkbox" name="auto_download_previews" value="1">
+        Automatically download preview video clips
+      </label>
+    </p>
+    <button>Submit</button>
+  </form>
+
+</body>
+</html>
