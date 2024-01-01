@@ -31,7 +31,7 @@ It's a friendlier and more visual alternative to browsing folders of videos on y
 - Python
 - YouTube API key
 - ffmpeg
-- mpv is required to watch videos 
+- VLC to watch videos (or can set a different program in settings.toml)
 
 ### Setup
 
