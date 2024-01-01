@@ -1,4 +1,4 @@
-# YTVIP: a personal YouTube video library for desktop
+# YTVIP: a yt-dlp GUI & archive
 
 YTVIP is a local YouTube video library. Add your favorite channels,
 then browse, search, and download available videos, 
