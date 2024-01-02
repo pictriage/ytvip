@@ -1,10 +1,9 @@
 starlette
 uvicorn
 python-multipart
-honcho
 icecream
 yt-dlp
-ibis
-peewee
+ibis==3.2.0
+peewee==3.15.4
 aiohttp
 toml

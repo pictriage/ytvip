@@ -827,14 +827,23 @@ class WatchMPV(HTTPEndpoint):
             is_landscape = video.width > video.height
             paths = [video.file_path()]
         else:
-            is_landscape = bool(form.get("rotated"))
             if channel_id:
                 channel = Channel.get(id=channel_id)
                 channel.local_view_count += 1
                 channel.save()
             else:
                 channel = None
-            paths = get_downloaded_paths(is_landscape=is_landscape, channel=channel)
+            if common.FORCE_VERTICAL:
+                if bool(form.get("rotated")):
+                    orientation = 'htov'
+                    is_landscape = True
+                else:
+                    orientation = 'vert'
+                    is_landscape = False
+            else:
+                orientation = None
+                is_landscape = None  # irrevelant
+            paths = get_downloaded_paths(orientation=orientation, channel=channel)
 
             if not paths:
                 return HTMLResponse("no videos to play")
@@ -1093,10 +1102,8 @@ def main():
 
 
 _MSG_HELP = f"""
-"{CMD_NAME} create": create a {BRAND_NAME} library in the current dir
 "{CMD_NAME}": launch the {BRAND_NAME} server
-"{CMD_NAME} worker": launch the {BRAND_NAME} worker process (necessary for downloading videos)
-"{CMD_NAME} all": launch server+worker together.
+"{CMD_NAME} create": create a {BRAND_NAME} library in the current dir
 """
 
 
