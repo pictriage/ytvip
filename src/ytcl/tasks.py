@@ -1,21 +1,39 @@
+import logging
+import json
+import time
 from pathlib import Path
-from huey import SqliteHuey
-from .common import call, YT_DLP_CMD, TEMP_DIR, download_preview_immediate, YT_DLP_FLAGS
-from .models import Video, DOWNLOAD_STATUS
+from ytcl.common import download_video_file_info, print_function, YT_DLP_CMD, TEMP_DIR
+
+from .common import call, YT_DLP_CMD, TEMP_DIR, YT_DLP_FLAGS
+from .models import Video, DOWNLOAD_STATUS, QueuedTask
 from icecream import ic  # noqa
 
 print_function = print
 
-huey = SqliteHuey(filename='huey.sqlite3')
+
+logger = logging.getLogger(__name__)
+
+def listen():
+    print_function("Worker is listening for messages")
+
+    while True:
+        task: QueuedTask = QueuedTask.select().order_by(QueuedTask.priority.desc()).first()
+        if not task:
+            time.sleep(5)
+            continue
+        operation = task.operation
+        kwargs = json.loads(task.kwargs_json)
+        fxns = dict(download=download, download_preview=download_preview)
+        fxn = fxns[operation]
+        try:
+            fxn(**kwargs)
+        except Exception as exc:
+            logger.exception(repr(exc))
+        task.delete_instance()
 
 
-# sometimes huey doesn't do anything until I press Ctrl+C
-# apparently this is an issue with greenlets.
-# it doesn't even seem to be doing anything in parallel
-
-
-@huey.task()
-def download(ytid, channel_dir: Path, preview_channel_dir: Path):
+def download(ytid, channel_dir: str, preview_channel_dir: str):
+    channel_dir = Path(channel_dir)
     # youtube seems to be blocking me and returning 403 partway through
     # the download:
     # https://github.com/yt-dlp/yt-dlp/issues/7860
@@ -46,16 +64,35 @@ def download(ytid, channel_dir: Path, preview_channel_dir: Path):
     video.set_download_status(DOWNLOAD_STATUS.DOWNLOADED)
     video.save()
 
-    download_preview_immediate(ytid, preview_channel_dir)
+    download_preview(ytid, preview_channel_dir)
     print_function(f"Downloaded {ytid}: video and preview")
 
 
-# using this instead of huey.immediate because it seems immediate mode
-# doesn't bubble exceptions. it's not the same as regular sync code.
-download_preview = huey.task(priority=3)(download_preview_immediate)
+def download_preview(ytid, channel_dir: str, ss=5, to=25):
+    channel_dir = Path(channel_dir)
 
+    # download format stats because we need this in order to display
+    # the preview clip with proper orientation.
+    format_stats = download_video_file_info(ytid=ytid)
 
-@huey.task()
-def reencode_preview(ytid):
-    video = Video.get(ytid=ytid)
-    video.reencode_preview()
+    if not format_stats:
+        print_function(f"ERROR: cannot get info about {ytid}, skipping")
+        return
+
+    from .models import Video
+
+    Video.update(**format_stats).where(Video.ytid == ytid).execute()
+
+    call(
+        YT_DLP_CMD,
+        f'https://www.youtube.com/watch?v={ytid}',
+        '--output',
+        f"{ytid}.%(ext)s",
+        f"""--downloader ffmpeg --downloader-args "ffmpeg_i:-ss {ss} -to {to}" """,
+        """ -S "res:360" """,
+        """ -f "bv" """,
+        '--paths',
+        f"temp:{TEMP_DIR.as_posix()}",
+        '--paths',
+        f"home:{channel_dir.as_posix()}",
+    )

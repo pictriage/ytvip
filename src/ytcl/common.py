@@ -225,35 +225,6 @@ def download_video_file_info(ytid):
     )
 
 
-def download_preview_immediate(ytid, channel_dir: Path, ss=5, to=25):
-
-    # download format stats because we need this in order to display
-    # the preview clip with proper orientation.
-    format_stats = download_video_file_info(ytid=ytid)
-
-    if not format_stats:
-        print_function(f"ERROR: cannot get info about {ytid}, skipping")
-        return
-
-    from .models import Video
-
-    Video.update(**format_stats).where(Video.ytid == ytid).execute()
-
-    call(
-        YT_DLP_CMD,
-        f'https://www.youtube.com/watch?v={ytid}',
-        '--output',
-        f"{ytid}.%(ext)s",
-        f"""--downloader ffmpeg --downloader-args "ffmpeg_i:-ss {ss} -to {to}" """,
-        """ -S "res:360" """,
-        """ -f "bv" """,
-        '--paths',
-        f"temp:{TEMP_DIR.as_posix()}",
-        '--paths',
-        f"home:{channel_dir.as_posix()}",
-    )
-
-
 async def download_video_thumbnail(ytid, outpath: Path, session: ClientSession):
     """
     I think we need thumbnails no matter what....for example to show

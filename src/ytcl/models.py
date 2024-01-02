@@ -1,3 +1,4 @@
+import json
 import shlex
 import time
 import typing
@@ -235,7 +236,7 @@ class Video(Model):
         """
         only consider it queued for an hour or two...
         if it still hasn't been downloaded by then,
-        maybe it was de-queued (e.g. huey DB was deleted or the download failed)
+        maybe it was de-queued somehow
         """
         status = self.download_status
         if status == DOWNLOAD_STATUS.QUEUED:
@@ -326,18 +327,10 @@ class Video(Model):
     #         self.schedule_download_preview_shorter()
 
     def schedule_download_preview(self):
-        from . import tasks
-
-        tasks.download_preview(self.ytid, self.channel.preview_video_dir())
-
-    def schedule_download_preview_shorter(self):
-        from . import tasks
-
-        tasks.download_preview(self.ytid, self.channel.preview_video_dir(), ss=0, to=1)
-
-    def download_preview_shorter(self):
-        common.download_preview_immediate(
-            self.ytid, self.channel.preview_video_dir_shorter(), ss=0, to=1
+        QueuedTask.create(
+            operation='download_preview',
+            priority=3,
+            kwargs_json=json.dumps(dict(ytid=self.ytid, channel_dir=str(self.channel.preview_video_dir())))
         )
 
     def reencode_preview(self):
@@ -371,6 +364,15 @@ class Video(Model):
         if w > h:
             w, h = h, w
         return int(216 * h / w)
+
+
+class QueuedTask(Model):
+    class Meta:
+        database = db  # This model uses the "people.db" database.
+
+    operation = CharField()
+    kwargs_json = TextField()
+    priority = IntegerField(default=1)
 
 
 def get_downloaded_paths(orientation=None, channel=None) -> List[Path]:

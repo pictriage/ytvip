@@ -11,8 +11,6 @@ for line in requirements_txt.splitlines(keepends=False):
 
 CMD_NAME = 'ytvip'
 
-if Path('build').is_dir():
-    shutil.rmtree('build')
 if Path('dist').is_dir():
     shutil.rmtree('dist')
 
@@ -24,7 +22,7 @@ if Path('dist').is_dir():
 
 setup(
     name=CMD_NAME,
-    version='0.0.7',
+    version='0.0.8',
     packages=find_packages(),
     include_package_data=True,
     url='',
@@ -39,3 +37,6 @@ setup(
         ],
     },
 )
+
+if Path('build').is_dir():
+    shutil.rmtree('build')

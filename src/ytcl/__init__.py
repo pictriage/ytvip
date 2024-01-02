@@ -1,4 +1,5 @@
 import itertools
+import json
 import logging
 import math
 import os
@@ -49,6 +50,7 @@ from .models import (
     db,
     Channel,
     Video,
+    QueuedTask,
     get_downloaded_paths,
     get_all_downloaded_paths,
     get_all_preview_paths,
@@ -749,7 +751,17 @@ class Download(HTTPEndpoint):
         video.set_download_status(DOWNLOAD_STATUS.QUEUED)
         video.save()
 
-        tasks.download(ytid, channel.video_dir(), channel.preview_video_dir())
+        QueuedTask.create(
+            operation='download',
+            # downloading should be higher pri because
+            # it means you explicitly want that video.
+            priority=5,
+            kwargs_json=json.dumps(dict(
+                ytid=ytid,
+                channel_dir=str(channel.video_dir()),
+                preview_channel_dir=str(channel.preview_video_dir()),
+            ))
+        )
 
         return Response("")
 
@@ -834,7 +846,6 @@ class WatchMPV(HTTPEndpoint):
         if 'mpv' in common.VIDEO_PLAYER_CMD and common.FORCE_VERTICAL and is_landscape:
             args.append("--video-rotate=90")
         args += [str(p) for p in paths]
-        ic(args)
         # use .Popen instead of .call so it doesn't block
         try:
             subprocess.Popen(args)
@@ -1032,12 +1043,13 @@ def main():
         nargs='?',
         choices=[
             SUBCOMMANDS.CREATE,
-            SUBCOMMANDS.WEB,
+            #SUBCOMMANDS.WEB,
+            # need this because the subprocess uses it
             SUBCOMMANDS.WORKER,
-            SUBCOMMANDS.ALL,
+            #SUBCOMMANDS.ALL,
             SUBCOMMANDS.HELP,
         ],
-        default=SUBCOMMANDS.ALL,
+        #default=SUBCOMMANDS.ALL,
     )
 
     parser.add_argument(
@@ -1047,50 +1059,37 @@ def main():
     )
 
     args = parser.parse_args()
-    cmd = args.cmd or SUBCOMMANDS.WEB
+    cmd = args.cmd or SUBCOMMANDS.ALL
+
+    if cmd == SUBCOMMANDS.HELP:
+        print_function(_MSG_HELP)
+        sys.exit(0)
 
     if cmd == SUBCOMMANDS.CREATE:
         common.create_library()
         sys.exit(0)
 
     common.startup_checks()
+    db.create_tables([Channel, Video, IgnoreTerm, QueuedTask])
 
-    if cmd == SUBCOMMANDS.WEB:
+    if cmd == SUBCOMMANDS.WORKER:
+        from .tasks import listen
+        listen()
+
+    if cmd == SUBCOMMANDS.ALL:
         # don't want to run on a different port every time,
         # because it's not like pictriage where you launch it for a specific task.
         # it's something you can keep running for days.
-        db.create_tables([Channel, Video, IgnoreTerm])
+        subprocess.Popen(
+            [CMD_NAME, SUBCOMMANDS.WORKER]
+        )
+
         if common.LAUNCH_BROWSER:
             import webbrowser
 
             webbrowser.open(f"http://127.0.0.1:{args.port}")
         runserver(args.port)
 
-    # the problem with honcho is that when I Ctrl+C,
-    # I got:
-    # InterruptedError: [Errno 4] Interrupted function call
-    # and it hangs.
-    # also, interestingly, it seems that the huey worker
-    # doesn't produce any output about the tasks it's executing
-    # when launched via honcho??
-    # on linux, I get:
-    # sqlite3.OperationalError: locking protocol
-    # triggered by
-    # conn.execute('pragma journal_mode="%s"' % self._journal_mode)
-    #
-    elif cmd == SUBCOMMANDS.ALL:
-        from honcho.manager import Manager
-
-        m = Manager()
-        m.add_process("web", f"{CMD_NAME} {SUBCOMMANDS.WEB}")
-        m.add_process("worker", f"{CMD_NAME} {SUBCOMMANDS.WORKER}")
-        m.loop()
-
-    elif cmd == SUBCOMMANDS.WORKER:
-        worker()
-
-    elif cmd == SUBCOMMANDS.HELP:
-        print_function(_MSG_HELP)
 
 
 _MSG_HELP = f"""
@@ -1100,12 +1099,6 @@ _MSG_HELP = f"""
 "{CMD_NAME} all": launch server+worker together.
 """
 
-
-def worker():
-    from huey.bin import huey_consumer
-
-    with mock.patch.object(sys, "argv", ["huey_consumer", "ytcl.tasks.huey"]):
-        huey_consumer.consumer_main()
 
 
 if __name__ == "__main__":

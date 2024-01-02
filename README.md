@@ -21,8 +21,7 @@ It's a friendlier and more visual alternative to browsing folders of videos on y
     (not possible through regular YouTube UI)
   - search is instantaneous (works locally)
   - no "recommended for you" or other distractions
-- Video previews
-- Auto-hide videos based on title words or other criteria
+- Videos play in your favorite media player (configurable in settings.toml)
 - Small codebase with few dependencies
 
 ## Quickstart
@@ -39,18 +38,15 @@ It's a friendlier and more visual alternative to browsing folders of videos on y
 pip install ytvip 
 mkdir travel-vlogs
 cd travel-vlogs
-ytvip create 
+ytvip create
+
 ```
 
 Open `settings.toml` and fill in your API key.
 
 ### Running
 
-On Windows: run `ytvip web`, open a separate terminal window and run `ytvip worker`.
-The worker process is required to download videos.
-
-On Mac/Linux: you can launch both processes with the `ytvip` command.
-(This may work on Windows also but is experimental.)
+Just run: `ytvip`
 
 ## Moving pre-existing videos into YTVIP
 

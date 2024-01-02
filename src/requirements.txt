@@ -1,7 +1,6 @@
 starlette
 uvicorn
 python-multipart
-huey
 honcho
 icecream
 yt-dlp
