@@ -20,25 +20,16 @@ from .common import (
     call,
 )
 
-# apparently peewee doesn't work well with async ;(
-# https://fastapi.tiangolo.com/how-to/sql-databases-peewee/
-# maybe that is the root of my problems?
-# i'm getting an error on Linux.
-# it's triggered by db.connect(). Whichever process does it second fails.
-# peewee.OperationalError: locking protocol
-# not fixed by using check_same_thread=False
-# i think it's this: https://stackoverflow.com/a/46347618
-# but how is it related? i don't know what the subprocess is.
-# maybe uvicorn always launches a subprocess?
-# the error happens whether i use wal or not.
-db = SqliteDatabase('db.sqlite3', pragmas={
-    'foreign_keys': 1,
-    #'journal_mode': 'wal'
-}, check_same_thread=False)
+db = SqliteDatabase(
+    'db.sqlite3',
+    pragmas={'foreign_keys': 1, 'journal_mode': 'wal'},
+    check_same_thread=False,
+)
 
 VIDEO_FILE_EXTENSIONS = ['webm', 'mp4', 'mkv', 'avi']
 
 print_function = print
+
 
 def now_unix():
     return int(time.time())
@@ -193,6 +184,7 @@ class IgnoreTerm(Model):
     def all_terms(cls) -> set:
         return set(t.term for t in cls.select())
 
+
 class DOWNLOAD_STATUS:
     QUEUED = 'queued'
     STALE = '?'
@@ -267,7 +259,10 @@ class Video(Model):
         return path
 
     def is_recent(self):
-        return self.published_at.timestamp() > time.time() - common.RECENT_DAYS * 24 * 60 * 60
+        return (
+            self.published_at.timestamp()
+            > time.time() - common.RECENT_DAYS * 24 * 60 * 60
+        )
 
     def should_rotate(self):
         return common.FORCE_VERTICAL and self.height and (self.width > self.height)
@@ -275,7 +270,6 @@ class Video(Model):
     def horz_vert_htov(self):
         h = self.height
         w = self.width
-
 
         # this usually shouldn't happen. if there is a preview clip,
         # then we should also have the video dims,
@@ -293,12 +287,10 @@ class Video(Model):
             return 'htov'
         return 'horz'
 
-
     def display_orientation(self):
         if self.horz_vert_htov() == 'horz':
             return 'horz'
         return 'vert'
-
 
     def is_1080p_or_lower(self):
         return max(self.width, self.height) < 2000
@@ -330,7 +322,9 @@ class Video(Model):
         QueuedTask.create(
             operation='download_preview',
             priority=3,
-            kwargs_json=json.dumps(dict(ytid=self.ytid, channel_dir=str(self.channel.preview_video_dir())))
+            kwargs_json=json.dumps(
+                dict(ytid=self.ytid, channel_dir=str(self.channel.preview_video_dir()))
+            ),
         )
 
     def reencode_preview(self):
@@ -399,6 +393,7 @@ def get_all_downloaded_paths():
             paths.append(path)
     return paths
 
+
 def get_all_preview_paths():
     paths = []
     for ext in VIDEO_FILE_EXTENSIONS:
@@ -422,18 +417,21 @@ def migrate():
     if user_version == 0:
         pass
     elif user_version < 2:
+        migrate(migrator.add_column('video', 'download_status', Video.download_status))
         migrate(
-            migrator.add_column('video', 'download_status', Video.download_status)
+            migrator.rename_column(
+                'video', 'download_requested_epoch', 'download_status_epoch'
+            )
         )
         migrate(
-            migrator.rename_column('video', 'download_requested_epoch', 'download_status_epoch')
-        )
-        migrate(
-            migrator.rename_column('video', 'timestamp_added_locally', 'added_locally_epoch')
+            migrator.rename_column(
+                'video', 'timestamp_added_locally', 'added_locally_epoch'
+            )
         )
 
     new_user_version = 2
     if user_version < new_user_version:
         cur.execute(f"PRAGMA user_version = {new_user_version}")
+
 
 migrate()

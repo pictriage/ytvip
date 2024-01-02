@@ -34,7 +34,6 @@ PREVIEW_SHORT_ROOT = FILES_ROOT.joinpath('preview_videos_shorter')
 _PREFS_FILE = FILES_ROOT.joinpath(f'settings.toml')
 
 
-
 # should initialize these settings at module scope rather than inside the setup()
 # function, because they are immediately imported into other modules,
 # so by the time the setup() function patches them, it's too late.
@@ -42,6 +41,7 @@ if _PREFS_FILE.exists():
     _prefs = toml.loads(_PREFS_FILE.read_text('utf8'))
 else:
     _prefs = {}
+
 
 class _PREFKEYS:
     YOUTUBE_API_KEY = 'youtube_api_key'
@@ -55,6 +55,7 @@ class _PREFKEYS:
     RECENT_DAYS = 'recent_days'
     LAUNCH_BROWSER = 'launch_browser'
 
+
 DEFAULT_PORT = 8500
 DEFAULT_VIDEO_PLAYER_COMMAND = 'vlc'
 
@@ -67,19 +68,15 @@ _INITIAL_PREFS_CONTENT = {
 
 LAUNCH_BROWSER = _prefs.get(_PREFKEYS.LAUNCH_BROWSER, True)
 YOUTUBE_API_KEY = _prefs.get(_PREFKEYS.YOUTUBE_API_KEY)
-YT_DLP_CMD = (
-        _prefs.get(_PREFKEYS.YT_DLP_EXECUTABLE) or
-        'yt-dlp'
-)
+YT_DLP_CMD = _prefs.get(_PREFKEYS.YT_DLP_EXECUTABLE) or 'yt-dlp'
 YT_DLP_FLAGS = _prefs.get(_PREFKEYS.YT_DLP_FLAGS, '')
 VIDEO_PLAYER_CMD = (
-        _prefs.get(_PREFKEYS.VIDEO_PLAYER_EXECUTABLE) or
-        _prefs.get(_PREFKEYS.VIDEO_PLAYER_COMMAND) or
-        DEFAULT_VIDEO_PLAYER_COMMAND
+    _prefs.get(_PREFKEYS.VIDEO_PLAYER_EXECUTABLE)
+    or _prefs.get(_PREFKEYS.VIDEO_PLAYER_COMMAND)
+    or DEFAULT_VIDEO_PLAYER_COMMAND
 )
 
-if _prefs.get(
-    _PREFKEYS.VIDEO_PLAYER_FLAGS):
+if _prefs.get(_PREFKEYS.VIDEO_PLAYER_FLAGS):
     VIDEO_PLAYER_FLAGS = _prefs[_PREFKEYS.VIDEO_PLAYER_FLAGS]
 elif 'mpv' in VIDEO_PLAYER_CMD:
     VIDEO_PLAYER_FLAGS = "--fullscreen --ontop"
@@ -117,7 +114,6 @@ class SUBCOMMANDS:
     HELP = 'help'
 
 
-
 _MSG_NOT_LIBRARY_FOLDER = f"""
 This does not appear to be a {BRAND_NAME} folder ({_PREFS_FILE} is missing). 
 To create a {BRAND_NAME} video library here, run "{CMD_NAME} {SUBCOMMANDS.CREATE}".
@@ -135,6 +131,7 @@ Run these commands:
 or: '{CMD_NAME}' to start the web & worker together (experimental)
 """
 
+
 def create_library():
 
     VIDEOS_ROOT.mkdir(exist_ok=True)
@@ -142,9 +139,7 @@ def create_library():
     CHANNEL_THUMBNAILS_DIR.mkdir(exist_ok=True)
     PREVIEW_ROOT.mkdir(exist_ok=True)
     PREVIEW_SHORT_ROOT.mkdir(exist_ok=True)
-    _PREFS_FILE.write_text(
-        toml.dumps(_INITIAL_PREFS_CONTENT), encoding='utf8'
-    )
+    _PREFS_FILE.write_text(toml.dumps(_INITIAL_PREFS_CONTENT), encoding='utf8')
     print_function(f"Created a {BRAND_NAME} library! :)")
     print_function(_MSG_YOUTUBE_API_KEY)
     if shutil.which('mpv') is None:

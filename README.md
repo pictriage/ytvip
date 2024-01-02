@@ -9,10 +9,23 @@ It's a friendlier and more visual alternative to browsing folders of videos on y
 
 ![Screenshot](demo.gif)
 
+## Why use this?
+
+There are various YouTube channel downloaders/archives out there.
+The advantage of YTVIP is that it's simple, minimal, and lightweight:
+
+-	Can be installed simply with `pip install ytvip`. 
+	(No need for Docker, Node.js, a database server, or any other complex setup.)
+-	Lightweight with low system requirements. 
+	(Unlike some other programs that require gigabytes of RAM.)
+-	Small and simple codebase, written in Python, HTML, and some vanilla JavaScript.
+	(Some tools end up abandoned by their author and then nobody wants to take over
+	because they don't really understand the code or how to get it to compile.)
+	
+
 ## Features:
 
 - Fast
-- Easy to install (doesn't require Docker or any complex setup)
 - Clean, minimal interface
 - Works offline; only connects to YouTube when you ask it to update/download videos.
 - Can add videos to your library that you already downloaded some other way (see below) 
@@ -21,16 +34,19 @@ It's a friendlier and more visual alternative to browsing folders of videos on y
     (not possible through regular YouTube UI)
   - search is instantaneous (works locally)
   - no "recommended for you" or other distractions
-- Videos play in your favorite media player (configurable in settings.toml)
+- Videos play in your favorite media player (configurable in `settings.toml`)
 - Small codebase with few dependencies
 
 ## Quickstart
 
 ### Prerequisites
-- Python
-- YouTube API key
-- ffmpeg
-- VLC to watch videos (or can set a different program in settings.toml)
+
+-	Python
+-	YouTube API key
+-	ffmpeg (must be on `PATH`)
+-	VLC to watch videos, or can set a different program such as mpv in `settings.toml`.
+	Video player must be on `PATH`.
+	
 
 ### Setup
 

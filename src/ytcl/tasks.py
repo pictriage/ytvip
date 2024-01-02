@@ -13,11 +13,14 @@ print_function = print
 
 logger = logging.getLogger(__name__)
 
+
 def listen():
     print_function("Worker is listening for messages")
 
     while True:
-        task: QueuedTask = QueuedTask.select().order_by(QueuedTask.priority.desc()).first()
+        task: QueuedTask = (
+            QueuedTask.select().order_by(QueuedTask.priority.desc()).first()
+        )
         if not task:
             time.sleep(5)
             continue

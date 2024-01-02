@@ -29,8 +29,6 @@ def yt_request(resource, params):
         raise
 
 
-
-
 class ChannelNotFoundError(Exception):
     pass
 
@@ -113,7 +111,7 @@ async def list_videos_by_page(channel_id):
 
 def get_channel_from_video_url(url):
     parsed = urlparse(url)
-    #breakpoint()
+    # breakpoint()
     ytid = urllib.parse.parse_qs(parsed.query)['v'][0]
     resp = yt_request('videos', dict(part='snippet', id=ytid))
     channel_id = resp['items'][0]['snippet']['channelId']

@@ -468,9 +468,13 @@ class Search(HTTPEndpoint):
             date_max = request.query_params.get('date_max')
 
             if date_min:
-                where_clause.append(Video.published_at >= parse_html_date_input(date_min))
+                where_clause.append(
+                    Video.published_at >= parse_html_date_input(date_min)
+                )
             if date_max:
-                where_clause.append(Video.published_at <= parse_html_date_input(date_max))
+                where_clause.append(
+                    Video.published_at <= parse_html_date_input(date_max)
+                )
 
             if channels_to_include:
                 where_clause.append(Video.channel_id << channels_to_include.split(","))
@@ -479,7 +483,9 @@ class Search(HTTPEndpoint):
                 filter_widget_expanded = True
 
             elif channels_to_exclude:
-                where_clause.append(Video.channel_id.not_in(channels_to_exclude.split(",")))
+                where_clause.append(
+                    Video.channel_id.not_in(channels_to_exclude.split(","))
+                )
                 for channel in channels:
                     channel.tmp_is_included = channel.id not in channels_to_exclude
                 filter_widget_expanded = True
@@ -527,9 +533,11 @@ class Search(HTTPEndpoint):
         resp.set_cookie(SEARCH_ORDER_BY_DATE_COOKIE, order_by_date_str)
         return resp
 
+
 def parse_html_date_input(value) -> datetime:
     yyyy, mm, dd = value.split('-')
     return datetime(year=int(yyyy), month=int(mm), day=int(dd))
+
 
 class UpdateFromYouTube(HTTPEndpoint):
     async def get(self, request: Request):
@@ -565,9 +573,7 @@ class RecentlyPublished(HTTPEndpoint):
 
         ignore_terms = IgnoreTerm.all_terms()
 
-        videos = (Video.select()
-            .order_by(Video.published_at.desc())
-                  )[:300]
+        videos = (Video.select().order_by(Video.published_at.desc()))[:300]
 
         htmls = []
         for video in videos:
@@ -598,14 +604,14 @@ class Downloads(HTTPEndpoint):
 
         ignore_terms = IgnoreTerm.all_terms()
 
-        videos = (Video.select()
+        videos = (
+            Video.select()
             .where(Video.download_status_epoch.is_null(False))
             .order_by(Video.download_status_epoch.desc())
-                  )[:100]
+        )[:100]
 
         htmls = []
         show_static_thumbnails = get_show_static_thumbnails(request)
-
 
         for video in videos:
             html = mk_video_html(
@@ -756,11 +762,13 @@ class Download(HTTPEndpoint):
             # downloading should be higher pri because
             # it means you explicitly want that video.
             priority=5,
-            kwargs_json=json.dumps(dict(
-                ytid=ytid,
-                channel_dir=str(channel.video_dir()),
-                preview_channel_dir=str(channel.preview_video_dir()),
-            ))
+            kwargs_json=json.dumps(
+                dict(
+                    ytid=ytid,
+                    channel_dir=str(channel.video_dir()),
+                    preview_channel_dir=str(channel.preview_video_dir()),
+                )
+            ),
         )
 
         return Response("")
@@ -851,8 +859,9 @@ class WatchMPV(HTTPEndpoint):
 
         # it seems that backslashes work but not as_posix()
         import shlex
+
         args = [common.VIDEO_PLAYER_CMD] + shlex.split(common.VIDEO_PLAYER_FLAGS)
-        if 'mpv' in common.VIDEO_PLAYER_CMD and common.FORCE_VERTICAL and is_landscape:
+        if common.FORCE_VERTICAL and 'mpv' in common.VIDEO_PLAYER_CMD and is_landscape:
             args.append("--video-rotate=90")
         args += [str(p) for p in paths]
         # use .Popen instead of .call so it doesn't block
@@ -1041,7 +1050,6 @@ def runserver(port):
         # Don't write access log because we get tons of output
         # e.g. loading thumbnails
         access_log=False,
-
     )
 
 
@@ -1052,13 +1060,13 @@ def main():
         nargs='?',
         choices=[
             SUBCOMMANDS.CREATE,
-            #SUBCOMMANDS.WEB,
+            # SUBCOMMANDS.WEB,
             # need this because the subprocess uses it
             SUBCOMMANDS.WORKER,
-            #SUBCOMMANDS.ALL,
+            # SUBCOMMANDS.ALL,
             SUBCOMMANDS.HELP,
         ],
-        #default=SUBCOMMANDS.ALL,
+        # default=SUBCOMMANDS.ALL,
     )
 
     parser.add_argument(
@@ -1083,15 +1091,14 @@ def main():
 
     if cmd == SUBCOMMANDS.WORKER:
         from .tasks import listen
+
         listen()
 
     if cmd == SUBCOMMANDS.ALL:
         # don't want to run on a different port every time,
         # because it's not like pictriage where you launch it for a specific task.
         # it's something you can keep running for days.
-        subprocess.Popen(
-            [CMD_NAME, SUBCOMMANDS.WORKER]
-        )
+        subprocess.Popen([CMD_NAME, SUBCOMMANDS.WORKER])
 
         if common.LAUNCH_BROWSER:
             import webbrowser
@@ -1100,12 +1107,10 @@ def main():
         runserver(args.port)
 
 
-
 _MSG_HELP = f"""
 "{CMD_NAME}": launch the {BRAND_NAME} server
 "{CMD_NAME} create": create a {BRAND_NAME} library in the current dir
 """
-
 
 
 if __name__ == "__main__":
